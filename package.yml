@@ -1,7 +1,7 @@
 package: community.lazycat.app.moocup
 version: 1.0.50
-name: Moocup 截图工坊
-description: 几秒生成精美截图，浏览器里的产品图与代码截图工具
+name: Moocup
+description: Stunning screenshots in seconds
 min_os_version: 1.5.0
 homepage: https://github.com/jellydeck/moocup
 author: jellydeck
