@@ -1,0 +1,53 @@
+name: LazyCat LPK
+
+on:
+  schedule:
+    # Daily auto-update; GitHub Actions cron is UTC (CST = UTC+8)
+    - cron: "33 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      next: ${{ steps.resolve.outputs.next }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: resolve
+        name: Resolve version from the newest upstream release tag
+        shell: bash
+        run: |
+          current="$(sed -n "s/^version:[[:space:]]*//p" package.yml)"
+          upstream="$(curl --fail --silent --show-error --location --retry 3 --retry-all-errors             -H "Accept: application/vnd.github+json"             "https://api.github.com/repos/jellydeck/moocup/releases?per_page=20"             | python3 scripts/pick-release-tag.py)"
+          if [[ -z "${upstream}" ]]; then
+            echo "could not resolve an upstream release tag" >&2
+            exit 1
+          fi
+          if [[ "${upstream}" == "${current}" ]]; then
+            echo "already at ${current}"
+            echo "next=" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+          echo "upstream release ${upstream} differs from current ${current}"
+          echo "next=${upstream}" >> "${GITHUB_OUTPUT}"
+
+  lazycat:
+    needs: version
+    if: needs.version.outputs.next != ""
+    uses: ca-x/lazycat-github-action/.github/workflows/lazycat.yml@v1
+    with:
+      operation: auto
+      config: .github/lazycat-action.yml
+      version: ${{ needs.version.outputs.next }}
+      changelog: "Update to upstream release ${{ needs.version.outputs.next }}"
+      versioned-release-asset: true
+      toolchains: none
+    secrets:
+      APPSTORE_URL: ${{ secrets.APPSTORE_URL }}
+      APPSTORE_TOKEN: ${{ secrets.APPSTORE_TOKEN }}
+      APP_ID: ${{ secrets.APP_ID }}
+      PRIVATE_STORE_GROUP_CODES: ${{ secrets.PRIVATE_STORE_GROUP_CODES }}
