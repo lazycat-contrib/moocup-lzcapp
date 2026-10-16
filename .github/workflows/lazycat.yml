@@ -59,6 +59,7 @@ jobs:
       versioned-release-asset: true
       toolchains: node
       node-version: 22
+      node-package-manager: pnpm
     secrets:
       APPSTORE_URL: ${{ secrets.APPSTORE_URL }}
       APPSTORE_TOKEN: ${{ secrets.APPSTORE_TOKEN }}
