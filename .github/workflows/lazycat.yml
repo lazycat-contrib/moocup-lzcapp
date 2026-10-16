@@ -5,6 +5,11 @@ on:
     # Daily auto-update; GitHub Actions cron is UTC (CST = UTC+8)
     - cron: "33 4 * * *"
   workflow_dispatch:
+    inputs:
+      force:
+        description: Publish even when the upstream release matches the current version
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -20,6 +25,8 @@ jobs:
       - id: resolve
         name: Resolve version from the newest upstream release tag
         shell: bash
+        env:
+          FORCE: ${{ inputs.force }}
         run: |
           current="$(sed -n "s/^version:[[:space:]]*//p" package.yml)"
           upstream="$(curl --fail --silent --show-error --location --retry 3 --retry-all-errors             -H "Accept: application/vnd.github+json"             "https://api.github.com/repos/jellydeck/moocup/releases?per_page=20"             | python3 scripts/pick-release-tag.py)"
@@ -28,8 +35,13 @@ jobs:
             exit 1
           fi
           if [[ "${upstream}" == "${current}" ]]; then
-            echo "already at ${current}"
-            echo "next=" >> "${GITHUB_OUTPUT}"
+            if [[ "${FORCE}" == "true" ]]; then
+              echo "upstream ${upstream} matches current ${current}; force requested"
+              echo "next=${current}" >> "${GITHUB_OUTPUT}"
+            else
+              echo "already at ${current}"
+              echo "next=" >> "${GITHUB_OUTPUT}"
+            fi
             exit 0
           fi
           echo "upstream release ${upstream} differs from current ${current}"
