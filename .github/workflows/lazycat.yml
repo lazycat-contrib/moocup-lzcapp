@@ -57,7 +57,8 @@ jobs:
       version: ${{ needs.version.outputs.next }}
       changelog: "Update to upstream release ${{ needs.version.outputs.next }}"
       versioned-release-asset: true
-      toolchains: none
+      toolchains: node
+      node-version: 22
     secrets:
       APPSTORE_URL: ${{ secrets.APPSTORE_URL }}
       APPSTORE_TOKEN: ${{ secrets.APPSTORE_TOKEN }}
